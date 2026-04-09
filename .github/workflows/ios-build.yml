@@ -1,0 +1,37 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar dependências
+        run: |
+          cd duo-vet
+          npm ci
+          cd ../
+          npm ci
+      - name: Instalar CocoaPods
+        run: |
+          sudo gem install cocoapods
+      - name: Build frontend
+        run: |
+          cd duo-vet
+          npm run build
+      - name: Sincronizar Capacitor
+        run: |
+          cd ..
+          npx cap sync ios
+      - name: Build iOS
+        run: |
+          cd ios
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -archivePath $PWD/build/App.xcarchive archive
+          xcodebuild -exportArchive -archivePath $PWD/build/App.xcarchive -exportOptionsPlist ../duo-vet/exportOptions.plist -exportPath $PWD/build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-app
+          path: ios/build/*.ipa

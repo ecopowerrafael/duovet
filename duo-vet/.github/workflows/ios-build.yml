@@ -1,0 +1,55 @@
+name: iOS Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build iOS App
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Web Assets (Vite)
+        run: npm run build
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      - name: Setup Ruby and Cocoapods
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+      - run: sudo gem install cocoapods
+
+      - name: Install iOS Pods
+        run: cd ios/App && pod install
+
+      - name: Build iOS App (Archive)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cd ios/App
+          xcodebuild clean archive -workspace App.xcworkspace -scheme App -archivePath App.xcarchive
+
+      - name: Export IPA
+        run: |
+          cd ios/App
+          xcodebuild -exportArchive -archivePath App.xcarchive -exportOptionsPlist exportOptions.plist -exportPath output/
+
+      - name: Upload iOS Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: ios/App/output/

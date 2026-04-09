@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@capacitor/ios": "^8.3.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.6.1"
+  }
+}

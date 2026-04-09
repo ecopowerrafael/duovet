@@ -1,0 +1,158 @@
+# Guia Completo de Instalação do duo-vet (VPS do zero)
+
+Este guia ensina como instalar o duo-vet em uma VPS Linux, desde a contratação da VPS até o sistema rodando em produção. Indicado para iniciantes.
+
+---
+
+## 0. Contratando e Preparando a VPS
+
+1. **Escolha da VPS**: Recomendado Ubuntu Server 22.04 LTS (x64), 2GB RAM ou mais, 1 vCPU+, 20GB SSD+.
+   - Exemplos: DigitalOcean, Vultr, HostGator, UOL Cloud, AWS Lightsail, etc.
+2. **Acesse o painel da sua VPS** e anote o IP público, usuário (geralmente `root`) e senha inicial.
+3. **Conecte-se via SSH** do seu computador:
+   ```
+   ssh root@IP-DA-SUA-VPS
+   ```
+   - Se for Windows, use o PowerShell ou o programa PuTTY.
+4. **Altere a senha do root** (primeiro acesso):
+   ```
+   passwd
+   ```
+5. **Atualize o sistema**:
+   ```
+   apt update && apt upgrade -y
+   ```
+6. **Instale utilitários básicos**:
+   ```
+   apt install unzip curl wget git -y
+   ```
+7. **(Opcional) Crie um usuário comum para uso diário:**
+   ```
+   adduser seuusuario
+   usermod -aG sudo seuusuario
+   ```
+   - Depois, use `su - seuusuario` para trabalhar com menos riscos.
+
+---
+
+# (Continue o guia a partir do passo 1 já existente)
+
+## 1. Preparando o Projeto no Seu Computador
+
+1. Abra o terminal no seu computador.
+2. Acesse a pasta do projeto duo-vet.
+3. Gere o build do frontend:
+   ```
+npm run build
+   ```
+4. Copie o arquivo `.env.example` para `.env` e preencha com suas configurações (banco, JWT, Stripe, etc):
+   ```
+cp .env.example .env
+# Edite o arquivo .env conforme necessário
+   ```
+4. Compacte a pasta do projeto para facilitar o envio:
+   - No Windows, clique com o botão direito na pasta e escolha "Enviar para > Pasta compactada".
+   - Ou use o terminal:
+   ```
+powershell Compress-Archive -Path .\duo-vet\* -DestinationPath .\duo-vet.zip
+   ```
+
+---
+
+## 2. Enviando o Projeto para o Servidor (VPS)
+
+1. No terminal do seu computador, envie o arquivo compactado para a VPS:
+   ```
+scp caminho/para/duo-vet.zip root@IP-DA-SUA-VPS:/root
+   ```
+   - Exemplo real:
+   ```
+scp C:\Users\Code\OneDrive\Documentos\duo-vet\duo-vet.zip root@187.77.43.105:/root
+   ```
+2. Digite a senha do servidor quando solicitado.
+
+---
+
+## 3. Atualizando o Sistema na VPS
+
+1. Conecte-se à VPS:
+   ```
+ssh root@IP-DA-SUA-VPS
+   ```
+2. Descompacte o arquivo:
+    ``` 
+    pkill -f backend/index.js 
+    ``` 
+3. Entre na pasta do projeto:
+   ```
+cd duo-vet
+   ```
+4. Instale as dependências:
+   ```
+npm install
+   ```
+5. (Opcional) Gere o build do frontend na VPS, se não enviou a pasta dist pronta:
+   Copie e cole os comandos abaixo no terminal (não clique, apenas copie):
+   
+   chmod +x node_modules/.bin/vite
+   npm run build
+   
+   Se aparecer erro de permissão, use o chmod antes do npm run build.
+6. Pare o sistema antigo (exemplo com pm2):
+   ```
+pm2 stop nome-do-processo
+   ```
+   Ou, se rodava com node:
+   ```
+pkill -f backend/index.js
+   ```
+7. Inicie o sistema atualizado:
+   - Com pm2:
+   ```
+pm2 start backend/index.js
+   ```
+   - Ou com node:
+   ```
+   npm install node-fetch
+node backend/index.js &
+   ```
+8. Instale o PostgreSQL (se ainda não tiver):
+   ```
+apt update && apt install postgresql postgresql-contrib -y
+   ```
+9. Crie o banco de dados e usuário:
+   ```
+sudo -u postgres psql
+CREATE DATABASE duovet;
+CREATE USER duovetuser WITH PASSWORD 'sua_senha_forte';
+GRANT ALL PRIVILEGES ON DATABASE duovet TO duovetuser;
+\q
+   ```
+10. Importe o schema do banco:
+   ```
+psql -U duovetuser -d duovet -h localhost -f db-schema.sql
+   ```
+
+---
+
+## Como enviar só o arquivo backend/index.js para a VPS
+
+No terminal do seu computador, copie e cole o comando abaixo (ajuste o caminho se necessário):
+
+scp c:/Users/Code/OneDrive/Documentos/duo-vet/duo-vet/backend/index.js root@187.77.43.105:/root/duo-vet/backend/index.js
+
+Depois, na VPS, rode:
+
+node backend/index.js &
+
+---
+
+## 4. Dicas Finais
+
+- Sempre faça backup dos arquivos antigos antes de substituir.
+- Se tiver dúvidas, peça ajuda a um profissional ou envie sua dúvida para o suporte.
+- Para acessar o sistema, use o navegador e digite o endereço do seu servidor.
+
+---
+
+Pronto! O duo-vet estará atualizado e funcionando.
