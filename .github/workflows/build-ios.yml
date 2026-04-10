@@ -1,0 +1,32 @@
+name: Share Xcode Scheme and Build iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar dependências
+        run: |
+          npm ci
+      - name: Prebuild Expo
+        run: |
+          npx expo prebuild
+      - name: Compartilhar scheme do Xcode
+        run: |
+          cd ios
+          for scheme in $(ls App.xcodeproj/xcshareddata/xcschemes/*.xcscheme 2>/dev/null || true); do
+            plutil -replace Shared -bool true "$scheme"
+          done
+      - name: Commit scheme compartilhado
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add ios/App.xcodeproj/xcshareddata/xcschemes/*.xcscheme || true
+          git commit -m "chore: compartilhar scheme Xcode automaticamente" || echo "Nada para commitar"
+          git push || echo "Nada para enviar"
+      - name: Build iOS
+        run: |
+          npx eas-cli build --platform ios
