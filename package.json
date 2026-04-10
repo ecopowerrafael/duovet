@@ -1,8 +1,14 @@
 {
   "dependencies": {
-    "@capacitor/ios": "^8.3.0"
+    "@capacitor/ios": "^8.3.0",
+    "expo": "^55.0.13",
+    "react": "19.2.0",
+    "react-native": "0.83.4"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.6.1"
-  }
+  },
+  "name": "duo-vet (2)",
+  "version": "1.0.0",
+  "scripts": {}
 }
