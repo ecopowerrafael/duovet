@@ -6,6 +6,8 @@ on:
 jobs:
   build-ios:
     runs-on: macos-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Instalar dependências
