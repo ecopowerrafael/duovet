@@ -1,0 +1,252 @@
+Documento de Melhorias e Ajustes – DuoVet
+1. Atendimento em Lotes
+É necessário implementar a funcionalidade de atendimento em lotes, voltada principalmente
+para veterinários de produção (bovinos e equinos).
+Na página de Animais:
+● Deve ser possível cadastrar animais individuais.
+● Deve ser possível cadastrar lotes de animais.
+● O lote deve estar vinculado a uma propriedade.
+● O lote deve permitir identificar a espécie e a quantidade de animais.
+Na página de Atendimento:
+● O usuário deve poder escolher se o atendimento será para um animal específico ou
+para um lote.
+● Ao selecionar lote, o atendimento deve ser vinculado ao lote como um todo.
+● O registro financeiro deve considerar o atendimento do lote normalmente.
+2. Alteração do ícone de pata de cachorro
+O aplicativo não é voltado para pets, mas para veterinários de produção.
+Todos os ícones que utilizam pata de cachorro devem ser substituídos por ícones relacionados
+a animais de produção (bovinos ou equinos).
+Atualmente o ícone de pata está:
+● Na página de clientes.
+● No perfil do cliente.
+Esses ícones devem ser alterados para algo compatível com o posicionamento do aplicativo.
+3. Ícone da página de animais deve ser branco
+O ícone atual da página de animais e do perfil do animal está na cor preta. Deve ser alterado
+para branco, mantendo o mesmo estilo visual.
+Regras:
+● O ícone deve variar conforme a espécie do animal (exemplo: equino deve mostrar ícone
+de equino).
+● Para lotes, o ícone deve ser diferente do individual, indicando visualmente que se trata
+de um grupo de animais da mesma espécie.
+4. Animal e propriedade não estão sendo registrados
+Atualmente não é possível cadastrar corretamente uma propriedade ao criar um cliente. Como
+consequência, também não é possível cadastrar um animal, pois o sistema depende da
+propriedade vinculada.
+É necessário:
+● Corrigir a persistência da propriedade no banco de dados.
+● Garantir que após salvar, a propriedade apareça vinculada ao cliente.
+● Permitir que, após a criação da propriedade, seja possível cadastrar animais
+normalmente.
+Essa é uma correção crítica.
+6. Botão de nova prescrição não está funcionando
+Na página de prescrições, o botão para gerar uma nova prescrição não está executando
+nenhuma ação.
+É necessário:
+● Corrigir o evento do botão.
+● Garantir que ele abra a tela ou modal de criação de prescrição.
+● Permitir salvar corretamente a prescrição no prontuário.
+7. Remover cálculo automático de distância no cadastro do cliente
+Ao cadastrar um novo cliente, existe a opção de calcular automaticamente a distância.
+Essa opção deve ser removida.
+Deve permanecer apenas:
+● Campo manual para inserir a quilometragem.
+8. Integração com API de nota fiscal
+Implementar integração com API de emissão de nota fiscal.
+Requisitos:
+● Emissão após confirmação do atendimento.
+● Armazenar número da nota, status e documento gerado.
+● Permitir consulta posterior dentro do histórico financeiro.
+Envio Manual Mensal ao contador
+Como funciona:
+● O sistema gera as notas fiscais normalmente.
+● No fim do mês o usuário exporta:
+○ XML das notas
+○ PDFs
+○ Relatório consolidado em Excel
+● O usuário envia por e-mail ou WhatsApp para o contador.
+O que precisa no DuoVet:
+● Botão “Exportar notas do mês”.
+● Download em .zip contendo:
+○ XML
+○ PDF
+○ Planilha resumo (data, valor, cliente, número da nota).
+9. Reformulação da página de assinatura
+A página de assinatura dentro do aplicativo deve conter apenas informações da assinatura
+ativa do usuário.
+Deve exibir:
+● Plano atual.
+● Valor do plano.
+● Data de renovação.
+● Tempo restante até a próxima cobrança.
+● Histórico de pagamentos.
+Planos:
+● Plano mensal: R$ 149,90.
+● Plano anual (12 meses): R$ 1.499,00.
+● Novos usuários devem ter 7 dias de teste gratuito.
+Essa página não deve funcionar como página de vendas, mas sim como painel de controle da
+assinatura.
+10. Melhorar inserção do preço do atendimento
+Durante o registro do atendimento, o campo de valor do serviço precisa ser mais funcional.
+Necessário:
+● Campo com máscara de valor em reais.
+● Atualização automática no resumo do atendimento.
+● Visualização clara do total antes de finalizar.
+11. Valor do medicamento não altera o valor final do atendimento
+Ao adicionar um medicamento durante uma prescrição na tela de atendimento, o valor do
+serviço não está sendo atualizado automaticamente.
+É necessário:
+● Somar automaticamente o valor do medicamento ao valor total do atendimento.
+● Atualizar o total em tempo real.
+● Considerar quantidade quando aplicável.
+12. Agendar atendimento e retorno
+Ao agendar um atendimento ou retorno:
+● Ao clicar no campo de data, deve abrir um mini calendário para seleção.
+● Ao clicar no campo de horário, deve permitir seleção estruturada de horário.
+● A experiência deve ser simples e intuitiva.
+Integração com Google Agenda:
+● A agenda do DuoVet deve sincronizar com o Google Agenda.
+● Ao criar um atendimento, o evento deve aparecer no Google.
+● O usuário deve receber notificações pelo Google.
+● Alterações e cancelamentos devem ser refletidos no Google Agenda.
+13. Controle de recebimentos pendentes
+Separar:
+● Faturado
+● Recebido
+● A receber
+Permitir:
+● Marcar como pago.
+● Registrar a forma de pagamento.
+● Controlar parcelamento.
+14. Controle de despesas
+Além de faturamento, permite lançar despesas.
+15. Meta de faturamento mensal
+Permitir definir:
+● Meta do mês.
+● Mostrar percentual atingido.
+
+5. Autorização de atendimento
+Desenvolver uma nova funcionalidade para gerar um termo de autorização de atendimento em
+PDF.
+Regras:
+● Não deve ser obrigatório para todos os atendimentos.
+● O usuário deve escolher quando deseja gerar o termo.
+● O PDF deve conter dados do cliente, propriedade, animal ou lote, data e descrição do
+atendimento.
+● O documento deve poder ser baixado ou compartilhado.
+
+Autorização de Atendimento
+1. Momento de Geração
+O termo poderá ser gerado em dois cenários:
+1️⃣Antes do atendimento (Recomendado)
+Disponível:
+● Ao criar um novo atendimento.
+● Antes de registrar procedimentos.
+Fluxo:
+1. Usuário cria novo atendimento.
+2. Seleciona cliente + propriedade + animal ou lote.
+3. Antes de preencher detalhes clínicos, pode clicar em:
+“Gerar Termo de Autorização”.
+4. O sistema gera PDF com:
+○ Dados do cliente.
+○ Dados do animal/lote.
+○ Data prevista.
+○ Descrição inicial (se houver).
+5. O termo pode ser assinado antes da execução.
+2️⃣Após o atendimento
+Caso o usuário não tenha gerado antes:
+● Pode gerar ao final.
+● Documento pode incluir descrição final completa.
+2. Ajustes Técnicos Necessários
+2.1 Estrutura do Atendimento
+Permitir gerar termo quando o atendimento estiver em status:
+● “Agendado”
+● “Em andamento”
+● “Finalizado”
+Ou seja, o termo não deve depender do atendimento estar finalizado.
+2.2 Campo de Status do Termo
+Adicionar no atendimento:
+authorization_status:
+● Não gerado
+● Gerado antes do atendimento
+● Gerado após atendimento
+● Assinado
+● Comprovante anexado
+3. Lógica Inteligente do Documento
+Se gerado antes:
+● Texto pode dizer:
+“Autorização para realização do atendimento programado na data X.”
+Se gerado depois:
+● Texto pode dizer:
+“Autorização referente ao atendimento realizado na data X.”
+4. Melhor Experiência Possível
+Fluxo ideal de campo:
+1. Veterinário agenda atendimento.
+2. Antes de sair para o campo:
+○ Gera o termo.
+○ Já deixa salvo no celular.
+3. Chega na propriedade.
+4. Coleta assinatura.
+5. Anexa foto da assinatura.
+6. Realiza atendimento.
+7. Finaliza e ajusta valores.
+Modelo formal de Termo de Autorização de Atendimento
+Veterinário
+TERMO DE AUTORIZAÇÃO DE ATENDIMENTO
+VETERINÁRIO
+1. IDENTIFICAÇÃO DO PROFISSIONAL
+Nome do Médico(a) Veterinário(a):
+CPF/CNPJ:
+CRMV:
+Telefone:
+E-mail profissional:
+2. IDENTIFICAÇÃO DO CONTRATANTE (CLIENTE / PRODUTOR)
+Nome completo / Razão Social:
+CPF/CNPJ:
+Telefone:
+E-mail:
+Endereço:
+3. DADOS DA PROPRIEDADE RURAL (QUANDO APLICÁVEL)
+Nome da propriedade:
+Endereço / Localização:
+Município:
+UF:
+4. IDENTIFICAÇÃO DO(S) ANIMAL(IS)
+( ) Atendimento individual
+Espécie:
+Identificação (nome, número de brinco ou registro):
+( ) Atendimento em lote
+Espécie:
+Quantidade de animais:
+Identificação do lote (se houver):
+5. DADOS DO ATENDIMENTO
+Data do atendimento:
+Tipo de atendimento:
+Descrição resumida do procedimento a ser realizado:
+(Exemplo: atendimento clínico, protocolo sanitário, exame reprodutivo, cirurgia, aplicação de
+medicamentos, etc.)
+6. DECLARAÇÃO DE AUTORIZAÇÃO
+Declaro que, na qualidade de proprietário(a) ou responsável legal pelos animais acima identificados,
+autorizo o(a) Médico(a) Veterinário(a) identificado(a) neste documento a realizar o atendimento descrito.
+Declaro ainda que:
+● Fui informado(a) sobre os procedimentos que serão realizados.
+● Estou ciente dos possíveis riscos inerentes à atividade veterinária.
+● Autorizo a realização de exames complementares, quando necessários.
+● Estou ciente de que os serviços prestados serão devidamente cobrados conforme acordado
+entre as partes.
+7. RESPONSABILIDADE FINANCEIRA
+O contratante reconhece que os serviços prestados serão objeto de cobrança conforme valores
+previamente ajustados ou conforme tabela vigente do profissional.
+O pagamento poderá ser realizado por meio acordado entre as partes.
+8. EMISSÃO DE DOCUMENTO FISCAL
+Declaro estar ciente de que poderá ser emitida Nota Fiscal de Serviço referente ao atendimento
+realizado, conforme exigência legal.
+9. ASSINATURAS
+Local e data:
+Assinatura do Contratante:
+Nome completo:
+CPF/CNPJ:
+Assinatura do Médico(a) Veterinário(a):
+Nome completo:
+CRMV:
+● Os dados do veterinário e do cliente devem ser atualizados automaticamente no
+formulário de acordo com o cadastro.

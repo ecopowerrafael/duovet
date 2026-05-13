@@ -1,0 +1,150 @@
+name: iOS Build & Publish
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    name: Build and Publish iOS App
+    runs-on: macos-latest
+
+    steps:
+      # ── 1. Código fonte ──────────────────────────────────────────────────────
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js + dependências ────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # ── 3. Build web (Vite) + sync Capacitor ────────────────────────────────
+      - name: Build Web Assets
+        run: npm run build
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      # ── 4. CocoaPods ─────────────────────────────────────────────────────────
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods --no-document
+
+      - name: Install iOS Pods
+        working-directory: ios/App
+        run: pod install
+
+      # ── 5. Code Signing ───────────────────────────────────────────────────────
+      - name: Import Distribution Certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          # Cria keychain temporário
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Decodifica e importa o certificado .p12
+          echo "$CERTIFICATE_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import "$RUNNER_TEMP/certificate.p12" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12
+
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Install Provisioning Profile
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/profile.mobileprovision
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PP_PATH"
+
+          # Extrai UUID do perfil
+          UUID=$(security cms -D -i "$PP_PATH" | \
+            plutil -extract UUID xml1 -o - - | \
+            sed -n 's/.*<string>\(.*\)<\/string>.*/\1/p')
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/"$UUID".mobileprovision
+          echo "Provisioning Profile UUID: $UUID"
+
+      # ── 6. Archive ────────────────────────────────────────────────────────────
+      - name: Build iOS Archive
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        working-directory: ios/App
+        run: |
+          xcodebuild clean archive \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath $RUNNER_TEMP/App.xcarchive \
+            -destination "generic/platform=iOS" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="DuoVet App Store" \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            | xcpretty || true
+
+      # ── 7. Export IPA ─────────────────────────────────────────────────────────
+      - name: Export IPA
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Substitui o APPLE_TEAM_ID no exportOptions.plist
+          sed -i '' "s/\$(APPLE_TEAM_ID)/$APPLE_TEAM_ID/" ios/App/exportOptions.plist
+
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/App.xcarchive \
+            -exportOptionsPlist ios/App/exportOptions.plist \
+            -exportPath $RUNNER_TEMP/output/
+
+      # ── 8. Salva artefato (útil para debug) ───────────────────────────────────
+      - name: Upload IPA as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoVet-iOS-${{ github.run_number }}
+          path: ${{ runner.temp }}/output/*.ipa
+          retention-days: 14
+
+      # ── 9. Publicar na App Store via App Store Connect API ────────────────────
+      - name: Upload to App Store Connect
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          # Salva a chave API em arquivo
+          API_KEY_PATH=$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+          echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"
+
+          # Encontra o IPA gerado
+          IPA_PATH=$(find $RUNNER_TEMP/output -name "*.ipa" | head -1)
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --verbose

@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "slug": "duovet",
+    "extra": {
+      "eas": {
+        "projectId": "073eea47-c2f0-416f-8594-19ad65871e16"
+      }
+    },
+    "owner": "augusto.dev"
+  }
+}
